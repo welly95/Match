@@ -14,16 +14,14 @@ class ObscureTextField extends StatefulWidget {
 }
 
 class _ObscureTextFieldState extends State<ObscureTextField> {
+  bool _obscureText = true;
   @override
   Widget build(BuildContext context) {
-    bool _obscureText = true;
-
     return Directionality(
       textDirection: TextDirection.ltr,
       child: TextFormField(
         key: widget.key,
         controller: widget.obscureTextController,
-        //ToDo searching for problem that obscure text doesn't work!
         obscureText: _obscureText,
         // onChanged: (value) {
         //   widget.obscureTextController.text = value;
@@ -32,22 +30,21 @@ class _ObscureTextFieldState extends State<ObscureTextField> {
         validator: widget.validator,
         style: TextStyles.elMessiri,
         decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.0),
-            borderRadius: BorderRadius.circular(10),
+          contentPadding: EdgeInsets.symmetric(vertical: 8),
+          // enabledBorder: OutlineInputBorder(
+          //   borderSide: BorderSide(color: Colors.grey, width: 1.0),
+          //   borderRadius: BorderRadius.circular(10),
+          // ),
+          // disabledBorder: OutlineInputBorder(
+          //   borderSide: BorderSide(color: Colors.grey, width: 1.0),
+          //   borderRadius: BorderRadius.circular(10),
+          // ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black54),
           ),
-          disabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.0),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.0),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          fillColor: Colors.white70,
+          fillColor: Colors.transparent,
           filled: true,
           suffixIcon: IconButton(
-            //ToDo searching for problem that obscure text doesn't work!
             onPressed: () {
               setState(() {
                 _obscureText = !_obscureText;
@@ -56,6 +53,7 @@ class _ObscureTextFieldState extends State<ObscureTextField> {
             },
             icon: Icon(
               (_obscureText) ? Icons.remove_red_eye : Icons.remove_red_eye_outlined,
+              color: Colors.orange,
             ),
           ),
           hintText: widget.hintText,

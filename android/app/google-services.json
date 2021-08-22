@@ -1,0 +1,92 @@
+{
+  "project_info": {
+    "project_number": "893925056420",
+    "project_id": "match-7e3e3",
+    "storage_bucket": "match-7e3e3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893925056420:android:08bf711f9f427b47c5eb31",
+        "android_client_info": {
+          "package_name": "com.example.match"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "893925056420-npaviisqp66hc7ph7ke2e73s6csmegvr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.match",
+            "certificate_hash": "b97dbe046db6a6483ba9e81534c703ad6e5c3bc6"
+          }
+        },
+        {
+          "client_id": "893925056420-pum76knvlcikga56ti6e1vgr6401hdnb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.match",
+            "certificate_hash": "97140f0034c582082c62777652022e02503d4181"
+          }
+        },
+        {
+          "client_id": "893925056420-q3jtm0gpcs1dhth3jo17dvs0fsn7c203.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAN33LL4a-QHW8y2bKKqUl16Bfbi-ErUrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "893925056420-q3jtm0gpcs1dhth3jo17dvs0fsn7c203.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893925056420:android:fba8dc6acf627d57c5eb31",
+        "android_client_info": {
+          "package_name": "com.example.modon_screens"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "893925056420-j5s0ocua61ng24am6ta5p2bhmp80qi5a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.modon_screens",
+            "certificate_hash": "add00efdd2e23111d18e9deab97486cc6011f738"
+          }
+        },
+        {
+          "client_id": "893925056420-q3jtm0gpcs1dhth3jo17dvs0fsn7c203.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAN33LL4a-QHW8y2bKKqUl16Bfbi-ErUrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "893925056420-q3jtm0gpcs1dhth3jo17dvs0fsn7c203.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

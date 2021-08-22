@@ -19,27 +19,32 @@ class BasicTextField extends StatelessWidget {
         // onChanged: (value) {
         //   basicTextController.text = value;
         // },
+        onSaved: (value) {
+          basicTextController.text = value!;
+        },
         validator: validator,
         keyboardType: inputType,
         autocorrect: false,
         style: TextStyles.body,
         decoration: InputDecoration(
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.0),
-            borderRadius: BorderRadius.circular(10),
+          contentPadding: EdgeInsets.symmetric(vertical: 8),
+          // enabledBorder: OutlineInputBorder(
+          //   borderSide: BorderSide(color: Colors.grey, width: 1.0),
+          //   borderRadius: BorderRadius.circular(10),
+          // ),
+          // disabledBorder: OutlineInputBorder(
+          //   borderSide: BorderSide(color: Colors.grey, width: 1.0),
+          //   borderRadius: BorderRadius.circular(10),
+          // ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black54),
           ),
-          disabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.0),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.0),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          fillColor: Colors.white70,
+          fillColor: Colors.transparent,
           filled: true,
           hintText: hintText,
           hintStyle: TextStyles.textFieldsHint,
+          // focusColor: Colors.black54,
+          // hoverColor: Colors.black54,
         ),
       ),
     );

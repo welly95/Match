@@ -7,7 +7,10 @@ import '../../widgets/buttons/basic_button.dart';
 
 class Otp extends StatefulWidget {
   final phoneNumber;
-  Otp(this.phoneNumber);
+  final void Function(String otp) signIn;
+  final void Function(String phone) verifyPhoneNumber;
+
+  Otp(this.phoneNumber, this.signIn, this.verifyPhoneNumber);
 
   @override
   _OtpState createState() => _OtpState();
@@ -22,13 +25,14 @@ class _OtpState extends State<Otp> {
     _isActive = true;
   }
 
+  final _otpController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    final _otpController = TextEditingController();
+    // ignore: unused_local_variable
+    String? otp;
 
     SizeConfig().init(context);
-
-    String otp;
+    print(widget.phoneNumber);
     return SafeArea(
       child: Scaffold(
         body: SingleChildScrollView(
@@ -44,7 +48,7 @@ class _OtpState extends State<Otp> {
                 style: TextStyles.h2Bold,
               ),
               SizedBox(
-                height: SizeConfig.screenHeight! * 0.04,
+                height: SizeConfig.screenHeight! * 0.02,
               ),
               Text(
                 'Please Enter the verfication code',
@@ -86,7 +90,10 @@ class _OtpState extends State<Otp> {
                     autoFocus: true,
                     keyboardType: TextInputType.number,
                     onChanged: (_) {
-                      otp = _otpController.text;
+                      setState(() {
+                        otp = _otpController.text;
+                        print(_otpController.text);
+                      });
                     },
                   ),
                 ),
@@ -94,20 +101,34 @@ class _OtpState extends State<Otp> {
               SizedBox(
                 height: SizeConfig.screenHeight! * 0.04,
               ),
-              Text(
-                'Resend The Code',
-                style: TextStyles.h4.copyWith(color: Colors.black),
-                textAlign: TextAlign.center,
+              TextButton(
+                child: Text(
+                  'Resend The Code',
+                  style: TextStyles.h4.copyWith(
+                    color: Colors.black,
+                    decoration: TextDecoration.underline,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                onPressed: () {
+                  setState(() {
+                    otp = _otpController.text;
+                  });
+                  widget.verifyPhoneNumber(widget.phoneNumber);
+                },
               ),
               SizedBox(
-                height: SizeConfig.screenHeight! * 0.22,
+                height: SizeConfig.screenHeight! * 0.25,
               ),
               SizedBox(
-                width: SizeConfig.screenWidth! * 0.85,
+                width: SizeConfig.screenWidth! * 0.95,
                 height: SizeConfig.screenHeight! * 0.08,
                 child: BasicButton(
                   buttonName: 'Ok',
-                  onPressedFunction: () {},
+                  onPressedFunction: () {
+                    print(_otpController.text);
+                    widget.signIn(_otpController.text);
+                  },
                 ),
               ),
             ],

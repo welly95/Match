@@ -1,41 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:modon_screens/constants/size_config.dart';
 import 'package:modon_screens/constants/styles.dart';
+import 'package:modon_screens/screens/checkout_screen.dart';
 import 'package:modon_screens/screens/create_account.dart';
 import 'package:modon_screens/widgets/buttons/basic_button.dart';
 
-class CartScreen extends StatelessWidget {
-  get i => null;
+class CartScreen extends StatefulWidget {
+  @override
+  _CartScreenState createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  final user = FirebaseAuth.instance.currentUser;
+  int? userId;
+  var docId;
+  double? totalPrice = 0;
+  List _pricesList = [];
+
+  @override
+  void initState() {
+    Future.delayed(Duration(seconds: 0)).then((value) async {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: FirebaseAuth.instance.currentUser!.email)
+          .get();
+      for (var querySnapshotDocument in querySnapshot.docs) {
+        Map<String, dynamic> data = querySnapshotDocument.data();
+        userId = data['id'];
+        print(userId);
+      }
+      final querySnapshot2 = await FirebaseFirestore.instance
+          .collection('order')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: 1)
+          .get();
+      for (var querySnapshotDocument in querySnapshot2.docs) {
+        // Map<String, dynamic> data = querySnapshotDocument.data();
+        // totalPrice = double.parse(data['totalPrice']);
+        docId = querySnapshotDocument.id;
+      }
+    });
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final listOfCart = [
-      {
-        'name': 'Lounge',
-        'image': 'assets/images/furniture1.png',
-        'price': '1500',
-        'color': '0xFFA52A2A',
-        'quantity': 1,
-      },
-      {
-        'name': 'Sofa',
-        'image': 'assets/images/furniture2.jpg',
-        'price': '3500',
-        'color': '0xFF808080',
-        'quantity': 1,
-      },
-      {
-        'name': 'Metal Lounge',
-        'image': 'assets/images/furniture3.png',
-        'price': '2000',
-        'color': '0xFFFF0000',
-        'quantity': 1,
-      },
-    ];
-
-    final listOfPrice = [];
+    // final userNumber = FirebaseAuth.instance.currentUser!;
+    // FirebaseAuth.instance.signOut();
     SizeConfig().init(context);
-
+    print(user.toString());
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -62,176 +79,469 @@ class CartScreen extends StatelessWidget {
             Divider(
               indent: 25,
               endIndent: 25,
-              thickness: 2,
-              color: Colors.black,
+              thickness: 1,
+              color: Colors.grey,
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: listOfCart.length,
-                itemBuilder: (ctx, i) {
-                  listOfPrice.add(listOfCart[i]['name']);
-                  return Column(
-                    children: [
-                      Card(
-                        color: Colors.transparent,
-                        elevation: 0,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
-                          child: Row(
-                            children: [
-                              Container(
-                                height: SizeConfig.screenHeight! * 0.12,
-                                width: SizeConfig.screenWidth! * 0.35,
-                                child: Image.asset(
-                                  listOfCart[i]['image'].toString(),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('orderItems')
+                    .where('userId', isEqualTo: userId)
+                    .where('isDeleted', isEqualTo: false)
+                    .orderBy('id', descending: false)
+                    .snapshots(),
+                builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> cartSnapshot) {
+                  if (cartSnapshot.data == null || FirebaseAuth.instance.currentUser == null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Your Cart is Empty!',
+                            style: TextStyles.h1.copyWith(
+                              color: Colors.blueAccent,
+                              fontSize: 18,
+                            ),
+                          ),
+                          BasicButton(
+                            buttonName: 'Start Shopping',
+                            onPressedFunction: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => CreateAccount(),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Container(
-                                width: 1,
-                                height: SizeConfig.screenHeight! * 0.12,
-                                color: Colors.black,
-                              ),
-                              Container(
-                                height: SizeConfig.screenHeight! * 0.12,
-                                margin: EdgeInsets.only(left: 10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+
+                    //   return Center(
+                    //     child: CircularProgressIndicator(),
+                    //   );
+                  }
+
+                  final cartItems = cartSnapshot.data!.docs;
+                  _pricesList.clear();
+                  totalPrice = 0;
+                  return ListView.builder(
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      var price = cartItems[index]['price'];
+                      _pricesList.add(price);
+                      if (index + 1 == cartItems.length) {
+                        // totalPrice = 0;
+                        for (int i = 0; i < _pricesList.length; i++) {
+                          totalPrice = totalPrice! + double.parse(_pricesList[i]);
+                          print(totalPrice.toString());
+                        }
+                        return Column(
+                          children: [
+                            Card(
+                              color: Colors.transparent,
+                              elevation: 0,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      listOfCart[i]['name'].toString(),
-                                      style: TextStyles.h4,
-                                    ),
-                                    Text(
-                                      listOfCart[i]['price'].toString() + ' EGP',
-                                      style: TextStyles.h4,
-                                    ),
                                     Container(
-                                      height: 15,
-                                      width: 15,
-                                      color: Color(
-                                        int.parse(
-                                          listOfCart[i]['color'].toString(),
-                                        ),
+                                      height: SizeConfig.screenHeight! * 0.12,
+                                      width: SizeConfig.screenWidth! * 0.35,
+                                      child: Image.network(
+                                        cartItems[index]['itemImage'].toString(),
                                       ),
                                     ),
                                     SizedBox(
-                                      height: 22,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      width: 15,
+                                    ),
+                                    Container(
+                                      height: SizeConfig.screenHeight! * 0.12,
+                                      margin: EdgeInsets.only(left: 5),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              IconButton(
-                                                iconSize: 20,
-                                                onPressed: () {},
-                                                icon: Icon(
-                                                  Icons.remove,
-                                                  size: 20,
-                                                ),
-                                              ),
-                                              Text(
-                                                listOfCart[i]['quantity'].toString(),
-                                                style: TextStyles.h2,
-                                              ),
-                                              IconButton(
-                                                iconSize: 20,
-                                                onPressed: () {},
-                                                icon: Icon(
-                                                  Icons.add,
-                                                  size: 20,
-                                                ),
-                                              ),
-                                            ],
+                                          Text(
+                                            cartItems[index]['name'],
+                                            style: TextStyles.h4,
                                           ),
-                                          IconButton(
-                                            onPressed: () {
-                                              listOfPrice.removeWhere(
-                                                  (element) => element == int.parse(listOfCart[i]['price'].toString()));
-                                            },
-                                            icon: Icon(Icons.delete_outline),
+                                          Text(
+                                            price + ' EGP',
+                                            style: TextStyles.h4,
                                           ),
+                                          Container(
+                                            height: 15,
+                                            width: 15,
+                                            color: Colors.red,
+                                          ),
+                                          SizedBox(
+                                            height: 22,
+                                            width: SizeConfig.screenWidth! * 0.5,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    InkWell(
+                                                      onTap: () {
+                                                        if (cartItems[index]['count'] == 1) {
+                                                          return;
+                                                        }
+                                                        FirebaseFirestore.instance
+                                                            .collection('orderItems')
+                                                            .doc(cartItems[index].id)
+                                                            .update({
+                                                          'count': cartItems[index]['count'] - 1,
+                                                        }).then(
+                                                          (_) {
+                                                            return FirebaseFirestore.instance
+                                                                .collection('orderItems')
+                                                                .doc(cartItems[index].id)
+                                                                .update({
+                                                              'price': ((cartItems[index]['count'] - 1) *
+                                                                      double.parse(cartItems[index]['initPrice']))
+                                                                  .toStringAsFixed(2)
+                                                                  .toString(),
+                                                            }).then(
+                                                              (_) => FirebaseFirestore.instance
+                                                                  .collection('order')
+                                                                  .doc(docId)
+                                                                  .update(
+                                                                {
+                                                                  'totalPrice': totalPrice,
+                                                                },
+                                                              ),
+                                                            );
+                                                          },
+                                                        );
+                                                      },
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.only(
+                                                          top: 0.0,
+                                                          bottom: 8.0,
+                                                          right: 8.0,
+                                                          left: 0.0,
+                                                        ),
+                                                        child: Icon(
+                                                          Icons.remove,
+                                                          size: 30,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      cartItems[index]['count'].toString(),
+                                                      style: TextStyles.h2,
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        FirebaseFirestore.instance
+                                                            .collection('orderItems')
+                                                            .doc(cartItems[index].id)
+                                                            .update({
+                                                          'count': cartItems[index]['count'] + 1,
+                                                        }).then((_) {
+                                                          return FirebaseFirestore.instance
+                                                              .collection('orderItems')
+                                                              .doc(cartItems[index].id)
+                                                              .update({
+                                                            'price': ((cartItems[index]['count'] + 1) *
+                                                                    double.parse(cartItems[index]['initPrice']))
+                                                                .toStringAsFixed(2)
+                                                                .toString(),
+                                                          }).then((_) => FirebaseFirestore.instance
+                                                                      .collection('order')
+                                                                      .doc(docId)
+                                                                      .update({
+                                                                    'totalPrice': totalPrice,
+                                                                  }));
+                                                        });
+                                                      },
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.only(
+                                                          top: 0.0,
+                                                          bottom: 8.0,
+                                                          left: 8.0,
+                                                          right: 0.0,
+                                                        ),
+                                                        child: Icon(
+                                                          Icons.add,
+                                                          size: 30,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                IconButton(
+                                                  onPressed: () {
+                                                    FirebaseFirestore.instance
+                                                        .collection('orderItems')
+                                                        .doc(cartItems[index].id)
+                                                        .update({
+                                                      'isDeleted': true,
+                                                    });
+                                                  },
+                                                  icon: Icon(Icons.delete_outline),
+                                                ),
+                                              ],
+                                            ),
+                                          )
                                         ],
                                       ),
-                                    )
+                                    ),
                                   ],
                                 ),
                               ),
-                            ],
+                            ),
+                            Divider(
+                              indent: 25,
+                              endIndent: 25,
+                              thickness: 1,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.03,
+                            ),
+                            Container(
+                              width: SizeConfig.screenWidth! * 0.8,
+                              height: SizeConfig.screenHeight! * 0.08,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.black),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Total: ${totalPrice!.toStringAsFixed(2)} EGP',
+                                  style: TextStyles.h1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return Column(
+                        children: [
+                          Card(
+                            color: Colors.transparent,
+                            elevation: 0,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    height: SizeConfig.screenHeight! * 0.12,
+                                    width: SizeConfig.screenWidth! * 0.35,
+                                    child: Image.network(
+                                      cartItems[index]['itemImage'].toString(),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 15,
+                                  ),
+                                  Container(
+                                    height: SizeConfig.screenHeight! * 0.12,
+                                    margin: EdgeInsets.only(left: 5),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          cartItems[index]['name'],
+                                          style: TextStyles.h4,
+                                        ),
+                                        Text(
+                                          price + ' EGP',
+                                          style: TextStyles.h4,
+                                        ),
+                                        Container(
+                                          height: 15,
+                                          width: 15,
+                                          color: Colors.red,
+                                        ),
+                                        SizedBox(
+                                          height: 22,
+                                          width: SizeConfig.screenWidth! * 0.5,
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      if (cartItems[index]['count'] == 1) {
+                                                        return;
+                                                      }
+                                                      FirebaseFirestore.instance
+                                                          .collection('orderItems')
+                                                          .doc(cartItems[index].id)
+                                                          .update({
+                                                        'count': cartItems[index]['count'] - 1,
+                                                      }).then(
+                                                        (_) {
+                                                          return FirebaseFirestore.instance
+                                                              .collection('orderItems')
+                                                              .doc(cartItems[index].id)
+                                                              .update({
+                                                            'price': ((cartItems[index]['count'] - 1) *
+                                                                    double.parse(cartItems[index]['initPrice']))
+                                                                .toStringAsFixed(2)
+                                                                .toString(),
+                                                          }).then(
+                                                            (_) => FirebaseFirestore.instance
+                                                                .collection('order')
+                                                                .doc(docId)
+                                                                .update(
+                                                              {
+                                                                'totalPrice': totalPrice,
+                                                              },
+                                                            ),
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.only(
+                                                        top: 0.0,
+                                                        bottom: 8.0,
+                                                        right: 8.0,
+                                                        left: 0.0,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.remove,
+                                                        size: 30,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    cartItems[index]['count'].toString(),
+                                                    style: TextStyles.h2,
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      FirebaseFirestore.instance
+                                                          .collection('orderItems')
+                                                          .doc(cartItems[index].id)
+                                                          .update({
+                                                        'count': cartItems[index]['count'] + 1,
+                                                      }).then((_) {
+                                                        return FirebaseFirestore.instance
+                                                            .collection('orderItems')
+                                                            .doc(cartItems[index].id)
+                                                            .update({
+                                                          'price': ((cartItems[index]['count'] + 1) *
+                                                                  double.parse(cartItems[index]['initPrice']))
+                                                              .toStringAsFixed(2)
+                                                              .toString(),
+                                                        }).then((_) => FirebaseFirestore.instance
+                                                                    .collection('order')
+                                                                    .doc(docId)
+                                                                    .update({
+                                                                  'totalPrice': totalPrice,
+                                                                }));
+                                                      });
+                                                    },
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.only(
+                                                        top: 0.0,
+                                                        bottom: 8.0,
+                                                        left: 8.0,
+                                                        right: 0.0,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.add,
+                                                        size: 30,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              IconButton(
+                                                onPressed: () {
+                                                  FirebaseFirestore.instance
+                                                      .collection('orderItems')
+                                                      .doc(cartItems[index].id)
+                                                      .update({
+                                                    'isDeleted': true,
+                                                  });
+                                                },
+                                                icon: Icon(Icons.delete_outline),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Divider(
-                        indent: 25,
-                        endIndent: 25,
-                        thickness: 1,
-                        color: Colors.black,
-                      ),
-                    ],
+                          Divider(
+                            indent: 25,
+                            endIndent: 25,
+                            thickness: 1,
+                            color: Colors.grey,
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
             ),
-            // TextButton(
-            //   style: TextButton.styleFrom(
-            //     shape: RoundedRectangleBorder(
-            //       borderRadius: BorderRadius.circular(0),
-            //     ),
-            //     backgroundColor: Colors.white,
-            //   ),
-            //   onPressed: () {},
-            //   child: SizedBox(
-            //     height: SizeConfig.screenWidth! * 0.15,
-            //     width: SizeConfig.screenWidth! * 0.85,
-            //     child: Text(
-            //       'Total: ${listOfPrice.toString()}',
-            //       style: TextStyles.h2,
-            //     ),
-            //   ),
-            // ),
             SizedBox(
               height: 10,
             ),
-            Row(
-              children: [
-                SizedBox(
-                  height: SizeConfig.screenHeight! * 0.08,
-                  width: SizeConfig.screenWidth! * 0.75,
-                  child: BasicButton(
-                    buttonName: 'CheckOut',
-                    onPressedFunction: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => CreateAccount(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: Row(
+                children: [
+                  SizedBox(
+                    height: SizeConfig.screenHeight! * 0.08,
+                    width: SizeConfig.screenWidth! * 0.83,
+                    child: BasicButton(
+                      buttonName: 'CheckOut',
+                      onPressedFunction: () {
+                        if (user != null) {
+                          FirebaseFirestore.instance.collection('order').doc(docId).update({
+                            'totalPrice': totalPrice,
+                          });
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CheckOutScreen(totalPrice),
+                            ),
+                          );
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CreateAccount(),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    width: SizeConfig.screenWidth! * 0.008,
+                  ),
+                  SizedBox(
+                    height: SizeConfig.screenHeight! * 0.08,
+                    width: SizeConfig.screenWidth! * 0.15,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 5,
-                ),
-                SizedBox(
-                  height: SizeConfig.screenHeight! * 0.08,
-                  width: SizeConfig.screenWidth! * 0.2,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(0),
+                        backgroundColor: Colors.black,
                       ),
-                      backgroundColor: Colors.black,
-                    ),
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.call,
-                      color: Colors.white,
+                      onPressed: () {
+                        FirebaseAuth.instance.signOut();
+                      },
+                      child: Icon(
+                        Icons.call,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
