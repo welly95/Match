@@ -9,8 +9,9 @@ import 'package:modon_screens/screens/cart_screen.dart';
 import 'package:modon_screens/screens/forget_password.dart';
 import 'package:modon_screens/screens/otp.dart';
 import 'package:modon_screens/widgets/basic_textfield.dart';
-import 'package:modon_screens/widgets/buttons/basic_button.dart';
+import 'package:modon_screens/widgets/buttons/styled_rounded_loading_button.dart';
 import 'package:modon_screens/widgets/obscure_textfield.dart';
+import 'package:rounded_loading_button/rounded_loading_button.dart';
 
 class CreateAccount extends StatefulWidget {
   @override
@@ -32,6 +33,9 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
   TextEditingController signUpEmailController = TextEditingController();
   TextEditingController signUpAddressController = TextEditingController();
   TextEditingController signUpPasswordController = TextEditingController();
+
+  RoundedLoadingButtonController _signUpButtonController = RoundedLoadingButtonController();
+  RoundedLoadingButtonController _signInButtonController = RoundedLoadingButtonController();
 
   final _form = GlobalKey<FormState>();
   final _form2 = GlobalKey<FormState>();
@@ -93,15 +97,6 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.white,
-            // title: SizedBox(
-            //   child: Text(
-            //     'MATCH',
-            //     style: TextStyles.h1,
-            //   ),
-            //   height: SizeConfig.screenHeight! * 0.25,
-            //   width: SizeConfig.screenWidth!,
-            // ),
-            // centerTitle: true,
             bottom: PreferredSize(
               preferredSize: Size(SizeConfig.safeBlockHorizontal!, SizeConfig.safeBlockVertical! * 4),
               child: TabBar(
@@ -179,7 +174,7 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                               return 'Enter your Phone Number';
                             } else if (!value.startsWith('+20')) {
                               return 'Phone Number begins +20';
-                            } else if (value.length < 11) {
+                            } else if (value.length < 12) {
                               return 'Enter valide number';
                             } else {
                               return null;
@@ -280,9 +275,10 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                       SizedBox(
                         height: SizeConfig.screenHeight! * 0.01,
                       ),
-                      BasicButton(
-                        buttonName: 'Ok',
-                        onPressedFunction: () async {
+                      StyledRoundedLoadingButton(
+                        label: 'Ok',
+                        buttonController: _signUpButtonController,
+                        onPressed: () async {
                           _form.currentState!.validate();
 
                           if (_form.currentState!.validate() && _agree == true) {
@@ -323,12 +319,15 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                                 ),
                               );
                             });
-                          } else {
+                          } else if (_agree == false) {
+                            _signUpButtonController.reset();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Please agree terms and conditions'),
                               ),
                             );
+                          } else {
+                            _signUpButtonController.reset();
                           }
                         },
                       ),
@@ -426,47 +425,49 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                             ' Sign Up',
                             style: TextStyles.h1.copyWith(color: Colors.blue),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context)
+                                .pushReplacement(MaterialPageRoute(builder: (context) => CreateAccount()));
+                          },
                         ),
                       ],
                     ),
                     SizedBox(
                       height: SizeConfig.screenHeight! * 0.01,
                     ),
-                    SizedBox(
-                      height: SizeConfig.screenHeight! * 0.06,
-                      width: SizeConfig.screenWidth! * 0.75,
-                      child: BasicButton(
-                        buttonName: 'Ok',
-                        onPressedFunction: () {
-                          _form2.currentState!.validate();
-                          if (_form2.currentState!.validate()) {
-                            FirebaseAuth.instance
-                                .signInWithEmailAndPassword(
-                              email: signInEmailController.text,
-                              password: signInPasswordController.text,
-                            )
-                                .then(
-                              (value) async {
-                                final snapshot = await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .where('email', isEqualTo: signInEmailController.text)
-                                    .get();
-                                for (var queryDocumentSnapshot in snapshot.docs) {
-                                  Map<String, dynamic> data = queryDocumentSnapshot.data();
-                                  FirebaseAuth.instance.currentUser!.updateDisplayName(data['name']);
-                                  // FirebaseAuth.instance.currentUser!.updatePhoneNumber();
-                                }
-                                return Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => CartScreen(),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        },
-                      ),
+                    StyledRoundedLoadingButton(
+                      label: 'Ok',
+                      buttonController: _signInButtonController,
+                      onPressed: () {
+                        _form2.currentState!.validate();
+                        if (_form2.currentState!.validate()) {
+                          FirebaseAuth.instance
+                              .signInWithEmailAndPassword(
+                            email: signInEmailController.text,
+                            password: signInPasswordController.text,
+                          )
+                              .then(
+                            (value) async {
+                              final snapshot = await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .where('email', isEqualTo: signInEmailController.text)
+                                  .get();
+                              for (var queryDocumentSnapshot in snapshot.docs) {
+                                Map<String, dynamic> data = queryDocumentSnapshot.data();
+                                FirebaseAuth.instance.currentUser!.updateDisplayName(data['name']);
+                                // FirebaseAuth.instance.currentUser!.updatePhoneNumber();
+                              }
+                              return Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => CartScreen(),
+                                ),
+                              );
+                            },
+                          );
+                        } else {
+                          _signInButtonController.reset();
+                        }
+                      },
                     ),
                   ],
                 ),

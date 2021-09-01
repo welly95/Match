@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:modon_screens/widgets/buttons/styled_rounded_loading_button.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:rounded_loading_button/rounded_loading_button.dart';
 
 import '../../constants/size_config.dart';
 import '../../constants/styles.dart';
-import '../../widgets/buttons/basic_button.dart';
 
 class Otp extends StatefulWidget {
   final phoneNumber;
@@ -25,7 +26,9 @@ class _OtpState extends State<Otp> {
     _isActive = true;
   }
 
-  final _otpController = TextEditingController();
+  TextEditingController _otpController = TextEditingController();
+  RoundedLoadingButtonController _okButtonController = RoundedLoadingButtonController();
+
   @override
   Widget build(BuildContext context) {
     // ignore: unused_local_variable
@@ -120,16 +123,13 @@ class _OtpState extends State<Otp> {
               SizedBox(
                 height: SizeConfig.screenHeight! * 0.25,
               ),
-              SizedBox(
-                width: SizeConfig.screenWidth! * 0.95,
-                height: SizeConfig.screenHeight! * 0.08,
-                child: BasicButton(
-                  buttonName: 'Ok',
-                  onPressedFunction: () {
-                    print(_otpController.text);
-                    widget.signIn(_otpController.text);
-                  },
-                ),
+              StyledRoundedLoadingButton(
+                buttonController: _okButtonController,
+                label: 'Ok',
+                onPressed: () {
+                  print(_otpController.text);
+                  widget.signIn(_otpController.text);
+                },
               ),
             ],
           ),

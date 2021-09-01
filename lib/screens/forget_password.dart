@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:modon_screens/constants/size_config.dart';
 import 'package:modon_screens/constants/styles.dart';
 import 'package:modon_screens/widgets/basic_textfield.dart';
-import 'package:modon_screens/widgets/buttons/basic_button.dart';
+import 'package:modon_screens/widgets/buttons/styled_rounded_loading_button.dart';
+import 'package:rounded_loading_button/rounded_loading_button.dart';
 
 class ForgetPassword extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     TextEditingController emailController = TextEditingController();
+    RoundedLoadingButtonController _okButtonController = RoundedLoadingButtonController();
 
     return SafeArea(
       child: Scaffold(
@@ -62,10 +64,10 @@ class ForgetPassword extends StatelessWidget {
                 height: SizeConfig.screenHeight! * 0.15,
                 width: SizeConfig.screenWidth!,
               ),
-              SizedBox(
-                height: SizeConfig.screenHeight! * 0.08,
-                width: SizeConfig.screenWidth! * 0.85,
-                child: BasicButton(buttonName: 'Ok', onPressedFunction: () {}),
+              StyledRoundedLoadingButton(
+                buttonController: _okButtonController,
+                label: 'Ok',
+                onPressed: () {},
               ),
             ],
           ),

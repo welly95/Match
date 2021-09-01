@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:modon_screens/constants/size_config.dart';
 import 'package:modon_screens/constants/styles.dart';
 import 'package:modon_screens/screens/cart_screen.dart';
-import 'package:modon_screens/screens/create_account.dart';
-import 'package:modon_screens/widgets/buttons/basic_button.dart';
+import 'package:modon_screens/widgets/buttons/styled_rounded_loading_button.dart';
+import 'package:rounded_loading_button/rounded_loading_button.dart';
 
 class CheckOutScreen extends StatefulWidget {
   final totalPrice;
@@ -16,30 +16,61 @@ class CheckOutScreen extends StatefulWidget {
 }
 
 class _CheckOutScreenState extends State<CheckOutScreen> {
+  RoundedLoadingButtonController _startShoppingController = RoundedLoadingButtonController();
+  RoundedLoadingButtonController _confirmButtonController = RoundedLoadingButtonController();
+  RoundedLoadingButtonController _okButtonController = RoundedLoadingButtonController();
   int? userId;
+  var docId;
+  final user = FirebaseAuth.instance.currentUser;
+  int? status;
 
   @override
   void initState() {
     Future.delayed(Duration(seconds: 0)).then((value) async {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: FirebaseAuth.instance.currentUser!.email)
-          .get();
-      for (var querySnapshotDocument in querySnapshot.docs) {
-        Map<String, dynamic> data = querySnapshotDocument.data();
-        userId = data['id'];
-        print(userId);
+      if (user != null) {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .where('email', isEqualTo: FirebaseAuth.instance.currentUser!.email)
+            .get();
+        for (var querySnapshotDocument in querySnapshot.docs) {
+          Map<String, dynamic> data = querySnapshotDocument.data();
+          userId = data['id'];
+          // print(userId);
+        }
+        final querySnapshot2 = await FirebaseFirestore.instance
+            .collection('order')
+            .where('userId', isEqualTo: userId)
+            .where('status', isEqualTo: 2)
+            .get();
+        for (var querySnapshotDocument2 in querySnapshot2.docs) {
+          // Map<String, dynamic> data = querySnapshotDocument.data();
+          // totalPrice = double.parse(data['totalPrice']);
+          docId = querySnapshotDocument2.id;
+          // print('docId======>' + docId);
+        }
+
+        final querySnapshot3 = await FirebaseFirestore.instance
+            .collection('order')
+            .where('userId', isEqualTo: userId)
+            .where('status', isEqualTo: 2)
+            .get();
+        for (var querySnapshotDocument3 in querySnapshot3.docs) {
+          Map<String, dynamic> data = querySnapshotDocument3.data();
+          setState(() {
+            status = data['status'];
+          });
+        }
+        // final querySnapshot2 = await FirebaseFirestore.instance
+        //     .collection('order')
+        //     .where('userId', isEqualTo: userId)
+        //     .where('status', isEqualTo: 1)
+        //     .get();
+        // for (var querySnapshotDocument in querySnapshot2.docs) {
+        //   // Map<String, dynamic> data = querySnapshotDocument.data();
+        //   // totalPrice = double.parse(data['totalPrice']);
+        //   docId = querySnapshotDocument.id;
+        // }
       }
-      // final querySnapshot2 = await FirebaseFirestore.instance
-      //     .collection('order')
-      //     .where('userId', isEqualTo: userId)
-      //     .where('status', isEqualTo: 1)
-      //     .get();
-      // for (var querySnapshotDocument in querySnapshot2.docs) {
-      //   // Map<String, dynamic> data = querySnapshotDocument.data();
-      //   // totalPrice = double.parse(data['totalPrice']);
-      //   docId = querySnapshotDocument.id;
-      // }
     });
 
     super.initState();
@@ -73,83 +104,97 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               ),
             ),
             Divider(
-              indent: 25,
-              endIndent: 25,
+              indent: 15,
+              endIndent: 15,
               thickness: 1,
               color: Colors.grey,
             ),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('orderItems')
-                    .where('userId', isEqualTo: userId)
-                    .where('isDeleted', isEqualTo: false)
-                    .orderBy('id', descending: false)
-                    .snapshots(),
-                builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (snapshot.data == null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Your Cart is Empty!',
-                            style: TextStyles.h1.copyWith(
-                              color: Colors.blueAccent,
-                              fontSize: 18,
-                            ),
-                          ),
-                          BasicButton(
-                            buttonName: 'Start Shopping',
-                            onPressedFunction: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => CreateAccount(),
+            (status == 2)
+                ? Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('orderItems')
+                          .where('userId', isEqualTo: userId)
+                          .where('isDeleted', isEqualTo: false)
+                          .orderBy('id', descending: false)
+                          .snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.data == null) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Your Cart is Empty!',
+                                  style: TextStyles.h1.copyWith(
+                                    color: Colors.blueAccent,
+                                    fontSize: 18,
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    );
+                                StyledRoundedLoadingButton(
+                                  buttonController: _startShoppingController,
+                                  label: 'Start Shopping',
+                                  onPressed: null,
+                                  // () {
+                                  // Navigator.of(context).push(
+                                  //   MaterialPageRoute(
+                                  //     builder: (context) => CreateAccount(),
+                                  //   ),
+                                  // );
+                                  // },
+                                ),
+                              ],
+                            ),
+                          );
 
-                    //   return Center(
-                    //     child: CircularProgressIndicator(),
-                    //   );
-                  }
-                  final cartItems = snapshot.data!.docs;
-                  return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: SizeConfig.screenWidth! * 0.0,
-                      childAspectRatio: MediaQuery.of(context).size.width / (MediaQuery.of(context).size.height / 3),
-                    ),
-                    itemCount: cartItems.length,
-                    itemBuilder: (ctx, index) {
-                      return Card(
-                        color: Colors.transparent,
-                        elevation: 0,
-                        child: Center(
-                          child: Stack(
-                            children: [
-                              FittedBox(child: Image.network(cartItems[index]['itemImage'])),
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Icon(
-                                  Icons.check_circle_outline_rounded,
+                          //   return Center(
+                          //     child: CircularProgressIndicator(),
+                          //   );
+                        }
+                        final cartItems = snapshot.data!.docs;
+                        return GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: SizeConfig.screenWidth! * 0.0,
+                            childAspectRatio:
+                                MediaQuery.of(context).size.width / (MediaQuery.of(context).size.height / 3),
+                          ),
+                          itemCount: cartItems.length,
+                          itemBuilder: (ctx, index) {
+                            return Card(
+                              color: Colors.transparent,
+                              elevation: 0,
+                              child: Center(
+                                child: Stack(
+                                  children: [
+                                    FittedBox(child: Image.network(cartItems[index]['itemImage'])),
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: Icon(
+                                        Icons.check_circle_outline_rounded,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  )
+                : Expanded(
+                    child: Center(
+                    child: Text(
+                      'Your Cart is Empty!',
+                      style: TextStyles.h1.copyWith(
+                        color: Colors.blueAccent,
+                        fontSize: 18,
+                      ),
+                    ),
+                  )),
             Container(
-              width: SizeConfig.screenWidth! * 0.8,
+              width: SizeConfig.screenWidth! * 0.92,
               height: SizeConfig.screenHeight! * 0.08,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.black),
@@ -164,63 +209,67 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             SizedBox(
               height: SizeConfig.screenHeight! * 0.05,
             ),
-            SizedBox(
-              height: SizeConfig.screenHeight! * 0.08,
-              width: SizeConfig.screenWidth! * 0.8,
-              child: BasicButton(
-                  buttonName: 'Confirm',
-                  onPressedFunction: () {
-                    showModalBottomSheet(
-                      context: context,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      )),
-                      builder: (ctx) {
-                        return Container(
-                          height: SizeConfig.screenHeight! * 0.35,
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: SizeConfig.screenHeight! * 0.02,
-                              ),
-                              Icon(
-                                Icons.check,
-                                color: Colors.black,
-                                size: 40,
-                              ),
-                              SizedBox(
-                                height: SizeConfig.screenHeight! * 0.05,
-                              ),
-                              Text(
-                                'Your Order is Confirmed',
-                                style: TextStyles.h1,
-                              ),
-                              SizedBox(
-                                height: SizeConfig.screenHeight! * 0.07,
-                              ),
-                              SizedBox(
-                                height: SizeConfig.screenHeight! * 0.08,
-                                width: SizeConfig.screenWidth! * 0.8,
-                                child: BasicButton(
-                                  buttonName: 'ok',
-                                  onPressedFunction: () {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .push(MaterialPageRoute(builder: (context) => CartScreen()));
-                                  },
-                                ),
-                              ),
-                              SizedBox(
-                                height: SizeConfig.screenHeight! * 0.03,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }),
-            ),
+            StyledRoundedLoadingButton(
+                width: SizeConfig.screenWidth! * 0.92,
+                buttonController: _confirmButtonController,
+                label: 'Confirm',
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    )),
+                    builder: (ctx) {
+                      return Container(
+                        height: SizeConfig.screenHeight! * 0.35,
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.02,
+                            ),
+                            Icon(
+                              (status == 2) ? Icons.check : Icons.close,
+                              color: Colors.black,
+                              size: 40,
+                            ),
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.05,
+                            ),
+                            Text(
+                              (status == 2) ? 'Your Order is Confirmed' : 'Add some Products to Cart!',
+                              style: TextStyles.h1,
+                            ),
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.07,
+                            ),
+                            StyledRoundedLoadingButton(
+                              buttonController: _okButtonController,
+                              label: 'ok',
+                              onPressed: () {
+                                if (status == 2) {
+                                  FirebaseFirestore.instance.collection('order').doc(docId).update({
+                                    'totalPrice': widget.totalPrice,
+                                    'status': 3,
+                                  });
+                                  Navigator.of(context, rootNavigator: true)
+                                      .push(MaterialPageRoute(builder: (context) => CartScreen()));
+                                } else {
+                                  Navigator.of(context, rootNavigator: true)
+                                      .push(MaterialPageRoute(builder: (context) => CartScreen()));
+                                }
+                              },
+                            ),
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.03,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }),
             SizedBox(
               height: SizeConfig.screenHeight! * 0.02,
             )
