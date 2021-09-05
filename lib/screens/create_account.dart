@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:modon_screens/constants/size_config.dart';
 import 'package:modon_screens/constants/styles.dart';
@@ -9,6 +13,7 @@ import 'package:modon_screens/screens/cart_screen.dart';
 import 'package:modon_screens/screens/forget_password.dart';
 import 'package:modon_screens/screens/otp.dart';
 import 'package:modon_screens/widgets/basic_textfield.dart';
+import 'package:modon_screens/widgets/buttons/phoneNumber_textfield.dart';
 import 'package:modon_screens/widgets/buttons/styled_rounded_loading_button.dart';
 import 'package:modon_screens/widgets/obscure_textfield.dart';
 import 'package:rounded_loading_button/rounded_loading_button.dart';
@@ -36,6 +41,9 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
 
   RoundedLoadingButtonController _signUpButtonController = RoundedLoadingButtonController();
   RoundedLoadingButtonController _signInButtonController = RoundedLoadingButtonController();
+
+  String _selected = '';
+  String _selectedNumber = '';
 
   final _form = GlobalKey<FormState>();
   final _form2 = GlobalKey<FormState>();
@@ -97,6 +105,9 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.white,
+            iconTheme: IconThemeData(
+              color: Colors.black,
+            ),
             bottom: PreferredSize(
               preferredSize: Size(SizeConfig.safeBlockHorizontal!, SizeConfig.safeBlockVertical! * 4),
               child: TabBar(
@@ -133,7 +144,7 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                 FocusScope.of(context).unfocus();
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: EdgeInsets.symmetric(horizontal: (SizeConfig.screenWidth! * 0.05).toDouble()),
                 child: Form(
                   key: _form,
                   autovalidateMode: AutovalidateMode.disabled,
@@ -161,26 +172,70 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                       SizedBox(
                         height: SizeConfig.screenHeight! * 0.01,
                       ),
-                      SizedBox(
-                        height: SizeConfig.screenHeight! * 0.1,
-                        width: SizeConfig.screenWidth! * 0.85,
-                        child: BasicTextField(
-                          ValueKey('Phone'),
-                          signUpNumberController,
-                          'Phone Number',
-                          TextInputType.phone,
-                          (value) {
-                            if (value!.isEmpty) {
-                              return 'Enter your Phone Number';
-                            } else if (!value.startsWith('+20')) {
-                              return 'Phone Number begins +20';
-                            } else if (value.length < 12) {
-                              return 'Enter valide number';
-                            } else {
-                              return null;
-                            }
-                          },
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: SizeConfig.screenWidth! * 0.2,
+                                height: SizeConfig.screenHeight! * 0.07,
+                                child: CountryCodePicker(
+                                  dialogSize: Size(
+                                    SizeConfig.screenWidth! * 0.75,
+                                    SizeConfig.screenHeight! * 0.75,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  showDropDownButton: true,
+                                  dialogTextStyle: TextStyles.h4,
+                                  searchStyle: TextStyles.h4,
+                                  textStyle: TextStyles.h4,
+                                  showFlag: false,
+                                  onChanged: (code) {
+                                    setState(() {
+                                      _selected = code.dialCode!;
+                                    });
+                                  },
+                                  initialSelection: 'EG',
+                                  favorite: ['+20', 'EG'],
+                                  showFlagDialog: false,
+                                  onInit: (code) {
+                                    _selected = code!.dialCode!;
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: SizeConfig.screenWidth! * 0.18,
+                                child: Divider(
+                                  color: Colors.black54,
+                                  height: 2,
+                                  thickness: 1,
+                                ),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: SizeConfig.screenHeight! * 0.1,
+                            width: SizeConfig.screenWidth! * 0.7,
+                            child: PhoneNumberTextField(
+                              ValueKey('Phone'),
+                              signUpNumberController,
+                              'Phone Number',
+                              TextInputType.phone,
+                              (value) {
+                                if (value!.isEmpty) {
+                                  return 'Enter your Phone Number';
+                                } else if (value.length < 10) {
+                                  return 'Enter valide number';
+                                } else {
+                                  return null;
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(
                         height: SizeConfig.screenHeight! * 0.01,
@@ -280,9 +335,14 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                         buttonController: _signUpButtonController,
                         onPressed: () async {
                           _form.currentState!.validate();
-
+                          if (signUpNumberController.text.length == 10 || signUpNumberController.text.length == 11) {
+                            _selectedNumber = _selected + signUpNumberController.text.replaceFirst('0', '');
+                            print(_selectedNumber);
+                          }
                           if (_form.currentState!.validate() && _agree == true) {
-                            //ToDo: if user!=null go to checkout screen
+                            if (signUpNumberController.text.length == 10 || signUpNumberController.text.length == 11) {
+                              _selectedNumber = _selected + signUpNumberController.text.replaceFirst('0', '');
+                            }
                             verifyPhoneNumber(signUpNumberController.text).then((_) async {
                               try {
                                 FirebaseFirestore.instance.collection('users').get().then((value) {
@@ -298,16 +358,16 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                               final userTokenId = await FirebaseMessaging.instance.getToken();
                               FirebaseFirestore.instance.collection('users').doc(userId.toString()).set({
                                 'id': userId!,
-                                'name': signUpNameController.text,
-                                'mobile': signUpNumberController.text,
-                                'email': signUpEmailController.text,
-                                'address': signUpAddressController.text,
-                                'password': signUpPasswordController.text,
+                                'name': signUpNameController.text.trim(),
+                                'mobile': _selectedNumber,
+                                'email': signUpEmailController.text.trim(),
+                                'address': signUpAddressController.text.trim(),
+                                'password': signUpPasswordController.text.trim(),
                                 'loginMethod': 1,
                                 'status': 1,
                                 'image': '',
                                 'crDate': Timestamp.now(),
-                                'token': userTokenId
+                                'token': userTokenId,
                               });
                               FirebaseAuth.instance.createUserWithEmailAndPassword(
                                 email: signUpEmailController.text,
@@ -441,29 +501,108 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                       onPressed: () {
                         _form2.currentState!.validate();
                         if (_form2.currentState!.validate()) {
-                          FirebaseAuth.instance
-                              .signInWithEmailAndPassword(
-                            email: signInEmailController.text,
-                            password: signInPasswordController.text,
-                          )
-                              .then(
-                            (value) async {
-                              final snapshot = await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .where('email', isEqualTo: signInEmailController.text)
-                                  .get();
-                              for (var queryDocumentSnapshot in snapshot.docs) {
-                                Map<String, dynamic> data = queryDocumentSnapshot.data();
-                                FirebaseAuth.instance.currentUser!.updateDisplayName(data['name']);
-                                // FirebaseAuth.instance.currentUser!.updatePhoneNumber();
-                              }
-                              return Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => CartScreen(),
-                                ),
-                              );
-                            },
-                          );
+                          try {
+                            FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                              email: signInEmailController.text.trim(),
+                              password: signInPasswordController.text.trim(),
+                            )
+                                .then(
+                              (value) async {
+                                final snapshot = await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .where('email', isEqualTo: signInEmailController.text.trim())
+                                    .get();
+                                for (var queryDocumentSnapshot in snapshot.docs) {
+                                  Map<String, dynamic> data = queryDocumentSnapshot.data();
+                                  FirebaseAuth.instance.currentUser!.updateDisplayName(data['name']);
+                                  // FirebaseAuth.instance.currentUser!.updatePhoneNumber();
+                                }
+                                return Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => CartScreen(),
+                                  ),
+                                );
+                              },
+                            ).catchError(
+                              (e) {
+                                if (Platform.isAndroid) {
+                                  switch (e.message) {
+                                    case 'There is no user record corresponding to this identifier. The user may have been deleted.':
+                                      Fluttertoast.showToast(
+                                        msg: 'There is no user record corresponding to this identifier',
+                                        gravity: ToastGravity.TOP,
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                      _signInButtonController.reset();
+
+                                      break;
+                                    case 'The password is invalid or the user does not have a password.':
+                                      Fluttertoast.showToast(
+                                        msg: 'The password is invalid or the email is not correct.',
+                                        gravity: ToastGravity.TOP,
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                      _signInButtonController.reset();
+
+                                      break;
+                                    case 'A network error (such as timeout, interrupted connection or unreachable host) has occurred.':
+                                      Fluttertoast.showToast(
+                                        msg:
+                                            'A network error (such as timeout, interrupted connection or unreachable host) has occurred.',
+                                        gravity: ToastGravity.TOP,
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                      _signInButtonController.reset();
+
+                                      break;
+                                    // ...
+                                    default:
+                                      print('Case ${e.message} is not yet implemented');
+                                  }
+                                } else if (Platform.isIOS) {
+                                  switch (e.code) {
+                                    case 'Error 17011':
+                                      Fluttertoast.showToast(
+                                        msg: 'There is no user record corresponding to this identifier',
+                                        gravity: ToastGravity.TOP,
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                      _signInButtonController.reset();
+
+                                      break;
+                                    case 'Error 17009':
+                                      Fluttertoast.showToast(
+                                        msg: 'The password is invalid or the email is not correct.',
+                                        gravity: ToastGravity.TOP,
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                      _signInButtonController.reset();
+
+                                      break;
+                                    case 'Error 17020':
+                                      Fluttertoast.showToast(
+                                        msg:
+                                            'A network error (such as timeout, interrupted connection or unreachable host) has occurred.',
+                                        gravity: ToastGravity.TOP,
+                                        toastLength: Toast.LENGTH_LONG,
+                                      );
+                                      _signInButtonController.reset();
+
+                                      break;
+                                    // ...
+                                    default:
+                                      print('Case ${e.message} is not yet implemented');
+                                      _signInButtonController.reset();
+                                  }
+                                  _signInButtonController.reset();
+                                }
+                              },
+                            );
+                          } on Exception catch (e) {
+                            print('error is ------>' + e.toString());
+                            _signInButtonController.reset();
+                          }
                         } else {
                           _signInButtonController.reset();
                         }

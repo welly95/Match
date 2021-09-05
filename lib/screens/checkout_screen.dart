@@ -84,6 +84,9 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          iconTheme: IconThemeData(
+            color: Colors.black,
+          ),
         ),
         body: Column(
           mainAxisSize: MainAxisSize.min,

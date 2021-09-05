@@ -97,6 +97,9 @@ class _CartScreenState extends State<CartScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          iconTheme: IconThemeData(
+            color: Colors.black,
+          ),
         ),
         body: Column(
           children: <Widget>[
@@ -704,6 +707,7 @@ class _CartScreenState extends State<CartScreen> {
                                 builder: (context) => CreateAccount(),
                               ),
                             );
+                            _startShoppingController.reset();
                           },
                         ),
                       ],

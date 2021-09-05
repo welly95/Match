@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:modon_screens/constants/size_config.dart';
 import 'package:modon_screens/constants/styles.dart';
 import 'package:modon_screens/widgets/basic_textfield.dart';
@@ -13,6 +15,13 @@ class ForgetPassword extends StatelessWidget {
 
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(
+            color: Colors.black,
+          ),
+        ),
         body: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -67,7 +76,15 @@ class ForgetPassword extends StatelessWidget {
               StyledRoundedLoadingButton(
                 buttonController: _okButtonController,
                 label: 'Ok',
-                onPressed: () {},
+                onPressed: () {
+                  FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text.trim()).then((_) {
+                    Fluttertoast.showToast(
+                      msg: 'A Password reset link has been send to your Email.',
+                      gravity: ToastGravity.TOP,
+                      toastLength: Toast.LENGTH_LONG,
+                    ).then((_) => Navigator.of(context).pop());
+                  });
+                },
               ),
             ],
           ),
