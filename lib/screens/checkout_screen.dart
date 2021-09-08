@@ -256,11 +256,19 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                     'totalPrice': widget.totalPrice,
                                     'status': 3,
                                   });
-                                  Navigator.of(context, rootNavigator: true)
-                                      .push(MaterialPageRoute(builder: (context) => CartScreen()));
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                      (MaterialPageRoute(
+                                        builder: (context) => CartScreen(),
+                                      )),
+                                      (route) => false);
+                                  _okButtonController.reset();
                                 } else {
-                                  Navigator.of(context, rootNavigator: true)
-                                      .push(MaterialPageRoute(builder: (context) => CartScreen()));
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                      (MaterialPageRoute(
+                                        builder: (context) => CartScreen(),
+                                      )),
+                                      (route) => false);
+                                  _okButtonController.reset();
                                 }
                               },
                             ),
@@ -272,6 +280,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                       );
                     },
                   );
+                  _confirmButtonController.reset();
                 }),
             SizedBox(
               height: SizeConfig.screenHeight! * 0.02,

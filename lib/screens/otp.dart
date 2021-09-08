@@ -134,8 +134,9 @@ class _OtpState extends State<Otp> {
                 buttonController: _okButtonController,
                 label: 'Ok',
                 onPressed: () {
-                  print(_otpController.text);
+                  // print(_otpController.text);
                   widget.signIn(_otpController.text);
+                  _okButtonController.reset();
                 },
               ),
             ],

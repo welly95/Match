@@ -123,8 +123,8 @@ class _CartScreenState extends State<CartScreen> {
                             children: [
                               InkWell(
                                 onTap: () {
-                                  FirebaseAuth.instance.signOut().then((_) => Navigator.of(context, rootNavigator: true)
-                                      .push(MaterialPageRoute(builder: (context) => CartScreen())));
+                                  FirebaseAuth.instance.signOut().then((_) => Navigator.of(context).pushAndRemoveUntil(
+                                      (MaterialPageRoute(builder: (context) => CartScreen())), (route) => false));
                                 },
                                 child: Icon(
                                   Icons.exit_to_app,
@@ -716,65 +716,69 @@ class _CartScreenState extends State<CartScreen> {
             SizedBox(
               height: 10,
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2.0),
-              child: Row(
-                children: [
-                  SizedBox(
-                    height: SizeConfig.screenHeight! * 0.08,
-                    width: SizeConfig.screenWidth! * 0.83,
-                    child: StyledRoundedLoadingButton(
-                      label: 'Check Out',
-                      buttonController: _checkOutController,
-                      onPressed: () {
-                        if (user != null && (status == 1 || status2 == 2)) {
-                          FirebaseFirestore.instance.collection('order').doc(docId).update({
-                            'totalPrice': totalPrice,
-                            'status': 2,
-                          });
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => CheckOutScreen(totalPrice),
+            (_startFetching!)
+                ? (status == 1 || status2 == 2)
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.08,
+                              width: SizeConfig.screenWidth! * 0.83,
+                              child: StyledRoundedLoadingButton(
+                                label: 'Check Out',
+                                buttonController: _checkOutController,
+                                onPressed: () {
+                                  if (user != null && (status == 1 || status2 == 2)) {
+                                    FirebaseFirestore.instance.collection('order').doc(docId).update({
+                                      'totalPrice': totalPrice,
+                                      'status': 2,
+                                    });
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => CheckOutScreen(totalPrice),
+                                      ),
+                                    );
+                                  } else {
+                                    _checkOutController.reset();
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => CheckOutScreen(0.0),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
                             ),
-                          );
-                        } else {
-                          _checkOutController.reset();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => CheckOutScreen(0.0),
+                            SizedBox(
+                              width: SizeConfig.screenWidth! * 0.008,
                             ),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  SizedBox(
-                    width: SizeConfig.screenWidth! * 0.008,
-                  ),
-                  SizedBox(
-                    height: SizeConfig.screenHeight! * 0.075,
-                    width: SizeConfig.screenWidth! * 0.15,
-                    child: TextButton(
-                      style: TextButton.styleFrom(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                            SizedBox(
+                              height: SizeConfig.screenHeight! * 0.075,
+                              width: SizeConfig.screenWidth! * 0.15,
+                              child: TextButton(
+                                style: TextButton.styleFrom(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  backgroundColor: Colors.black,
+                                ),
+                                onPressed: () {
+                                  launch('tel:+201142952828');
+                                  // FirebaseAuth.instance.signOut();
+                                },
+                                child: Icon(
+                                  Icons.call,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        backgroundColor: Colors.black,
-                      ),
-                      onPressed: () {
-                        launch('tel:+201142952828');
-                        // FirebaseAuth.instance.signOut();
-                      },
-                      child: Icon(
-                        Icons.call,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                      )
+                    : Container()
+                : Container(),
           ],
         ),
       ),
