@@ -29,6 +29,19 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
   @override
   void initState() {
     _agree = false;
+    Future.delayed(Duration(seconds: 0)).then((_) {
+      try {
+        FirebaseFirestore.instance.collection('users').get().then((value) {
+          setState(() {
+            userId = value.size + 1;
+          });
+        });
+      } on Exception catch (_) {
+        setState(() {
+          userId = 1;
+        });
+      }
+    });
     super.initState();
   }
 
@@ -61,18 +74,25 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
       },
       codeSent: (String verId, int? resendCode) {
         this.verificationId = verId;
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => Otp(phone, signIn, verifyPhoneNumber),
-          ),
-        );
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (context) => Otp(phone, signIn, verifyPhoneNumber),
+              ),
+            )
+            .then((_) => _signUpButtonController.reset());
       },
       timeout: const Duration(seconds: 60),
       verificationCompleted: (AuthCredential credential) async {
         print('${credential.toString()} let\'s do it');
       },
       verificationFailed: (FirebaseAuthException authException) {
-        // _isLoading = true;
+        Fluttertoast.showToast(
+          msg: authException.message!,
+          gravity: ToastGravity.TOP,
+          toastLength: Toast.LENGTH_LONG,
+        );
+        _signUpButtonController.reset();
         print(authException.message);
       },
     );
@@ -350,10 +370,6 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                         onPressed: () async {
                           _form.currentState!.validate();
 
-                          // if (signUpNumberController.text.length == 10 || signUpNumberController.text.length == 11) {
-                          //   _selectedNumber = _selected + signUpNumberController.text.replaceFirst('0', '');
-                          //   print(_selectedNumber);
-                          // }
                           if (_form.currentState!.validate() && _agree == true) {
                             if (signUpNumberController.text.length == 11) {
                               _selectedNumber = _selected + signUpNumberController.text.trim().replaceFirst('0', '');
@@ -369,21 +385,10 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                                   .then(
                                     (_) => verifyPhoneNumber(_selectedNumber).then(
                                       (_) async {
-                                        try {
-                                          FirebaseFirestore.instance.collection('users').get().then((value) {
-                                            setState(() {
-                                              userId = value.size + 1;
-                                            });
-                                          });
-                                        } on Exception catch (_) {
-                                          setState(() {
-                                            userId = 1;
-                                          });
-                                        }
                                         final userTokenId = await FirebaseMessaging.instance.getToken();
 
                                         if (userId == null) {
-                                          _signUpButtonController.reset();
+                                          // _signUpButtonController.reset();
                                           return;
                                         } else {
                                           FirebaseFirestore.instance.collection('users').doc(userId.toString()).set({
@@ -400,12 +405,14 @@ class _CreateAccountState extends State<CreateAccount> with SingleTickerProvider
                                             'token': userTokenId,
                                           });
 
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) => Otp(_selectedNumber, signIn, verifyPhoneNumber),
-                                            ),
-                                          );
-                                          _signUpButtonController.reset();
+                                          // Navigator.of(context)
+                                          //     .push(
+                                          //       MaterialPageRoute(
+                                          //         builder: (context) => Otp(_selectedNumber, signIn, verifyPhoneNumber),
+                                          //       ),
+                                          //     )
+                                          //     .then((_) => _signUpButtonController.reset());
+                                          // _signUpButtonController.reset();
                                         }
                                       },
                                     ),
